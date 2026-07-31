@@ -1,0 +1,34 @@
+# Environment & Secrets
+.env
+.env.local
+*.env
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Virtual Environments
+venv/
+env/
+ENV/
+.venv/
+
+# Local Vector Database & Indices
+chroma_db/
+*.chroma
+
+# Machine Learning & Embedding Cache
+.cache/
+huggingface/
+
+# Generated Evaluation Artifacts
+eval_report.json
+
+# IDE & OS Junk Files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,63 @@
+name: RAG Evaluation CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  evaluate-rag:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Ingest Vector Database
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          python src/ingest.py
+
+      - name: Run Evaluation Suite
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          python tests/eval_runner.py
+
+      - name: Check Regression Threshold Guardrail
+        run: |
+          python -c "
+          import json, sys
+          with open('eval_report.json') as f:
+              report = json.load(f)
+          faithfulness = report.get('faithfulness', 0.0)
+          relevance = report.get('answer_relevance', 0.0)
+          
+          print(f'CI Evaluation Check -> Faithfulness: {faithfulness}, Relevance: {relevance}')
+          
+          if faithfulness < 0.80 or relevance < 0.80:
+              print('❌ QUALITY REGRESSION DETECTED! Scores dropped below the required threshold of 0.80.')
+              sys.exit(1)
+          else:
+              print('✅ QUALITY GATE PASSED! Pipeline ready for deployment.')
+          "
+
+      - name: Upload Evaluation Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eval-report
+          path: eval_report.json
