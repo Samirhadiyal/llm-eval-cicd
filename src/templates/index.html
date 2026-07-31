@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLOps RAG Assistant & Eval Suite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans">
+
+    <!-- Header -->
+    <header class="border-b border-slate-800 bg-slate-950/50 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-indigo-600 p-2 rounded-lg">
+                    <i class="fa-solid fa-brain text-xl text-white"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight">MLOps Knowledge Assistant</h1>
+                    <p class="text-xs text-slate-400">Grounded RAG Pipeline + Automated CI/CD Eval</p>
+                </div>
+            </div>
+            <a href="/docs" target="_blank" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-md border border-slate-700 transition">
+                <i class="fa-solid fa-code text-indigo-400 mr-1"></i> Swagger API
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-5xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- Left Sidebar: Quick Testing Presets -->
+        <div class="space-y-4">
+            <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4">
+                <h2 class="text-sm font-semibold text-indigo-400 uppercase tracking-wider mb-3">
+                    <i class="fa-solid fa-bolt mr-1"></i> Quick Test Queries
+                </h2>
+                <p class="text-xs text-slate-400 mb-3">Click any preset below to test pipeline behavior:</p>
+                
+                <div class="space-y-2">
+                    <button onclick="fillQuery('What triggers automated model retraining?')" 
+                        class="w-full text-left text-xs bg-slate-700/50 hover:bg-indigo-600/20 hover:border-indigo-500 border border-slate-600/50 p-2.5 rounded-lg transition">
+                        <span class="text-slate-200 font-medium block">🎯 Factual Retrieval</span>
+                        <span class="text-slate-400 text-[11px]">"What triggers model retraining?"</span>
+                    </button>
+
+                    <button onclick="fillQuery('What is the ingestion cadence for batch features?')" 
+                        class="w-full text-left text-xs bg-slate-700/50 hover:bg-indigo-600/20 hover:border-indigo-500 border border-slate-600/50 p-2.5 rounded-lg transition">
+                        <span class="text-slate-200 font-medium block">⏱️ Cadence Lookup</span>
+                        <span class="text-slate-400 text-[11px]">"What is the batch update frequency?"</span>
+                    </button>
+
+                    <button onclick="fillQuery('What AWS S3 bucket region stores model weights?')" 
+                        class="w-full text-left text-xs bg-slate-700/50 hover:bg-amber-500/20 hover:border-amber-500 border border-slate-600/50 p-2.5 rounded-lg transition">
+                        <span class="text-amber-300 font-medium block">🛑 Out-of-Domain Guardrail</span>
+                        <span class="text-slate-400 text-[11px]">"What AWS S3 region is used?"</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Pipeline Status Box -->
+            <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 text-xs space-y-2">
+                <div class="flex justify-between items-center text-slate-300">
+                    <span>Vector DB:</span>
+                    <span class="text-emerald-400 font-mono">ChromaDB</span>
+                </div>
+                <div class="flex justify-between items-center text-slate-300">
+                    <span>Embeddings:</span>
+                    <span class="text-emerald-400 font-mono">all-MiniLM-L6-v2</span>
+                </div>
+                <div class="flex justify-between items-center text-slate-300">
+                    <span>Inference Model:</span>
+                    <span class="text-emerald-400 font-mono">Llama 3.1 8B</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Interactive Query Console -->
+        <div class="md:col-span-2 space-y-4">
+            <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-5 space-y-4">
+                <form id="askForm" onsubmit="submitQuery(event)" class="space-y-3">
+                    <label for="queryInput" class="block text-sm font-medium text-slate-200">
+                        Ask a question about the MLOps Playbook:
+                    </label>
+                    <div class="flex gap-2">
+                        <input type="text" id="queryInput" required
+                            placeholder="Type a question or select a preset on the left..." 
+                            class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition">
+                        <button type="submit" id="submitBtn"
+                            class="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-lg font-medium text-sm transition flex items-center gap-2">
+                            <span>Ask</span>
+                            <i class="fa-solid fa-paper-plane text-xs"></i>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Loading State -->
+                <div id="loading" class="hidden py-8 text-center text-slate-400 space-y-2">
+                    <i class="fa-solid fa-circle-notch fa-spin text-2xl text-indigo-400"></i>
+                    <p class="text-xs">Searching ChromaDB & generating grounded answer...</p>
+                </div>
+
+                <!-- Response Box -->
+                <div id="responseContainer" class="hidden space-y-4 border-t border-slate-700/80 pt-4">
+                    <div>
+                        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Generated Response:</h3>
+                        <div id="answerBox" class="p-4 rounded-lg bg-slate-900 border border-slate-700 text-sm leading-relaxed text-slate-200"></div>
+                    </div>
+
+                    <!-- Retrieved Context Accordion -->
+                    <div>
+                        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Retrieved Document Chunks:</h3>
+                        <div id="contextsBox" class="space-y-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function fillQuery(text) {
+            document.getElementById('queryInput').value = text;
+        }
+
+        async function submitQuery(e) {
+            e.preventDefault();
+            const query = document.getElementById('queryInput').value;
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const responseContainer = document.getElementById('responseContainer');
+
+            // Reset UI State
+            loading.classList.remove('hidden');
+            responseContainer.classList.add('hidden');
+            submitBtn.disabled = true;
+
+            try {
+                const res = await fetch('/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: query, top_k: 3 })
+                });
+
+                const data = await res.json();
+
+                // Populate Answer
+                const answerBox = document.getElementById('answerBox');
+                answerBox.innerText = data.answer;
+
+                // Highlight Guardrail Refusals
+                if(data.answer.includes("cannot answer")) {
+                    answerBox.className = "p-4 rounded-lg bg-amber-950/30 border border-amber-800/60 text-sm text-amber-200";
+                } else {
+                    answerBox.className = "p-4 rounded-lg bg-slate-900 border border-indigo-900/50 text-sm text-slate-200";
+                }
+
+                // Populate Retrieved Contexts
+                const contextsBox = document.getElementById('contextsBox');
+                contextsBox.innerHTML = '';
+                
+                if (data.retrieved_contexts && data.retrieved_contexts.length > 0) {
+                    data.retrieved_contexts.forEach((ctx, i) => {
+                        const item = document.createElement('div');
+                        item.className = "p-3 bg-slate-900/60 border border-slate-800 rounded text-xs font-mono text-slate-400";
+                        item.innerText = `Chunk ${i+1}: ${ctx}`;
+                        contextsBox.appendChild(item);
+                    });
+                } else {
+                    contextsBox.innerHTML = '<span class="text-xs text-slate-500">No contexts retrieved.</span>';
+                }
+
+                responseContainer.classList.remove('hidden');
+            } catch (err) {
+                alert("Error connecting to server: " + err);
+            } finally {
+                loading.classList.add('hidden');
+                submitBtn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
