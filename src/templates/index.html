@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic PDF RAG Assistant</title>
+    <title>Enterprise Multi-Doc RAG Assistant</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans">
@@ -17,23 +17,20 @@
                 </svg>
             </div>
             <div>
-                <h1 class="text-xl font-bold tracking-tight">RAG PDF Chatbot</h1>
-                <p class="text-xs text-slate-400">Hybrid Search + FlashRank Reranking + Observability</p>
+                <h1 class="text-xl font-bold tracking-tight">Enterprise Multi-Doc RAG Assistant</h1>
+                <p class="text-xs text-slate-400">Multi-Tenant Retrieval + FlashRank Reranking + Observability</p>
             </div>
-        </div>
-        <div id="activeDocBadge" class="hidden text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1.5 rounded-full flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span id="activeDocName">Document Active</span>
         </div>
     </header>
 
     <!-- Main Container -->
-    <main class="flex-1 max-w-5xl w-full mx-auto p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+    <main class="flex-1 max-w-6xl w-full mx-auto p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
 
-        <!-- Left Sidebar: File Upload -->
+        <!-- Sidebar: Upload & Knowledge Base -->
         <div class="md:col-span-1 space-y-6">
+            <!-- File Ingestion Card -->
             <div class="bg-slate-800/50 border border-slate-700/50 rounded-xl p-5 backdrop-blur">
-                <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4">1. Document Knowledge Base</h2>
+                <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4">1. Ingest Document</h2>
                 
                 <form id="uploadForm" class="space-y-4">
                     <div class="border-2 border-dashed border-slate-600 hover:border-indigo-500 rounded-lg p-6 text-center cursor-pointer transition-colors" onclick="document.getElementById('pdfInput').click()">
@@ -41,27 +38,43 @@
                         <svg class="w-8 h-8 text-slate-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                         </svg>
-                        <p class="text-xs text-slate-300 font-medium" id="fileNameDisplay">Click to upload PDF</p>
-                        <p class="text-[10px] text-slate-500 mt-1">Single PDF Context Mode</p>
+                        <p class="text-xs text-slate-300 font-medium" id="fileNameDisplay">Click to select PDF</p>
+                        <p class="text-[10px] text-slate-500 mt-1">Multi-Doc Ingestion Enabled</p>
                     </div>
 
                     <button type="submit" id="uploadBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 rounded-lg text-sm transition-all flex items-center justify-center gap-2">
-                        <span>Upload & Reset Database</span>
+                        <span>Add to Knowledge Base</span>
                     </button>
                 </form>
 
                 <div id="uploadStatus" class="mt-4 text-xs p-3 rounded-lg hidden"></div>
             </div>
+
+            <!-- Active Documents List -->
+            <div class="bg-slate-800/50 border border-slate-700/50 rounded-xl p-5 backdrop-blur">
+                <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-3">2. Knowledge Base Index</h2>
+                <div id="documentList" class="space-y-2 text-xs text-slate-400">
+                    <p class="italic">Loading indexed documents...</p>
+                </div>
+            </div>
         </div>
 
-        <!-- Right Panel: QA Chat & Observability Telemetry -->
+        <!-- Query & Telemetry Panel -->
         <div class="md:col-span-2 space-y-6">
             <div class="bg-slate-800/50 border border-slate-700/50 rounded-xl p-5 backdrop-blur">
-                <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4">2. Query System</h2>
+                <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4">3. Query System</h2>
 
                 <div class="space-y-4">
+                    <!-- Target Document Scope Selector -->
                     <div>
-                        <input type="text" id="queryInput" placeholder="Ask a question about the active document..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 transition-colors text-slate-100 placeholder-slate-500">
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Search Scope Filter</label>
+                        <select id="docScopeSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                            <option value="all">🌐 All Indexed Documents (Global Knowledge Base)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <input type="text" id="queryInput" placeholder="Ask a question about your indexed documents..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 transition-colors text-slate-100 placeholder-slate-500">
                     </div>
 
                     <button onclick="askQuestion()" id="askBtn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 rounded-lg text-sm transition-all flex items-center justify-center gap-2">
@@ -70,15 +83,14 @@
                 </div>
             </div>
 
-            <!-- Response Panel -->
+            <!-- Response Container -->
             <div id="responseContainer" class="hidden space-y-4">
-                <!-- Answer Card -->
                 <div class="bg-slate-800/50 border border-slate-700/50 rounded-xl p-5">
                     <h3 class="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-2">Answer</h3>
                     <p id="answerText" class="text-slate-200 text-sm leading-relaxed whitespace-pre-line"></p>
                 </div>
 
-                <!-- Observability Telemetry Card -->
+                <!-- Latency Telemetry -->
                 <div id="traceCard" class="bg-slate-950/80 border border-slate-800 rounded-xl p-4">
                     <h4 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                         <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -123,6 +135,40 @@
             }
         }
 
+        async function fetchDocuments() {
+            try {
+                const res = await fetch('/indexed-documents');
+                const docs = await res.json();
+                
+                const docList = document.getElementById('documentList');
+                const docScopeSelect = document.getElementById('docScopeSelect');
+                
+                docList.innerHTML = '';
+                docScopeSelect.innerHTML = '<option value="all">🌐 All Indexed Documents (Global Knowledge Base)</option>';
+                
+                if (docs.length === 0) {
+                    docList.innerHTML = '<p class="italic">No documents indexed yet.</p>';
+                    return;
+                }
+
+                docs.forEach(doc => {
+                    // Render in Sidebar list
+                    const item = document.createElement('div');
+                    item.className = "flex items-center justify-between p-2 rounded bg-slate-900/80 border border-slate-800 text-xs";
+                    item.innerHTML = `<span class="font-medium text-slate-200 truncate">${doc.filename}</span> <span class="text-[10px] text-indigo-400 font-mono">id: ${doc.doc_id}</span>`;
+                    docList.appendChild(item);
+
+                    // Render in Selector Dropdown
+                    const option = document.createElement('option');
+                    option.value = doc.doc_id;
+                    option.innerText = `📄 ${doc.filename} (id: ${doc.doc_id})`;
+                    docScopeSelect.appendChild(option);
+                });
+            } catch (err) {
+                console.error("Failed to load documents:", err);
+            }
+        }
+
         document.getElementById('uploadForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const fileInput = document.getElementById('pdfInput');
@@ -138,7 +184,7 @@
             uploadBtn.innerText = "Indexing PDF...";
             statusDiv.classList.remove('hidden');
             statusDiv.className = "mt-4 text-xs p-3 rounded-lg bg-indigo-500/10 text-indigo-300 border border-indigo-500/20";
-            statusDiv.innerText = "Resetting ChromaDB & building hybrid indexes...";
+            statusDiv.innerText = "Chunking, embedding, and building sparse/dense indices...";
 
             try {
                 const response = await fetch('/upload-pdf', { method: 'POST', body: formData });
@@ -147,9 +193,7 @@
                 if (response.ok) {
                     statusDiv.className = "mt-4 text-xs p-3 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
                     statusDiv.innerText = data.message;
-                    
-                    document.getElementById('activeDocBadge').classList.remove('hidden');
-                    document.getElementById('activeDocName').innerText = data.filename;
+                    await fetchDocuments();
                 } else {
                     throw new Error(data.detail || "Upload failed");
                 }
@@ -158,12 +202,13 @@
                 statusDiv.innerText = err.message;
             } finally {
                 uploadBtn.disabled = false;
-                uploadBtn.innerText = "Upload & Reset Database";
+                uploadBtn.innerText = "Add to Knowledge Base";
             }
         });
 
         async function askQuestion() {
             const query = document.getElementById('queryInput').value.trim();
+            const docId = document.getElementById('docScopeSelect').value;
             if (!query) return alert("Please enter a question.");
 
             const askBtn = document.getElementById('askBtn');
@@ -176,7 +221,7 @@
                 const response = await fetch('/ask', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query: query, top_k: 3 })
+                    body: JSON.stringify({ query: query, doc_id: docId, top_k: 3 })
                 });
 
                 const data = await response.json();
@@ -185,7 +230,6 @@
                 responseContainer.classList.remove('hidden');
                 document.getElementById('answerText').innerText = data.answer;
 
-                // Render Latency Telemetry
                 if (data.trace) {
                     document.getElementById('retrievalTime').innerText = (data.trace.retrieval_latency_ms || 0) + ' ms';
                     document.getElementById('rerankTime').innerText = (data.trace.rerank_latency_ms || 0) + ' ms';
@@ -193,7 +237,6 @@
                     document.getElementById('totalTime').innerText = (data.trace.total_latency_ms || 0) + ' ms';
                 }
 
-                // Render Context Chunks
                 const contextsList = document.getElementById('contextsList');
                 contextsList.innerHTML = '';
                 if (data.retrieved_contexts && data.retrieved_contexts.length > 0) {
@@ -211,6 +254,9 @@
                 askBtn.innerText = "Execute Search & Reason";
             }
         }
+
+        // Initialize documents list on page load
+        fetchDocuments();
     </script>
 </body>
 </html>
