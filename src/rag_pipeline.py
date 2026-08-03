@@ -150,8 +150,11 @@ class RAGPipeline:
         t2 = time.time()
         context_str = "\n\n".join([f"Chunk {i+1}: {ctx}" for i, ctx in enumerate(retrieved_contexts)])
         system_prompt = (
-            "You are a strict QA assistant. Answer the user's question using ONLY the provided context below. "
-            "If the answer cannot be found in the context, reply strictly: 'I cannot answer this based on the available documentation.'"
+            "You are a helpful AI document assistant. Answer the user's question using the provided context chunks. "
+            "If the user asks for a summary or overview (such as 'what is this pdf about?'), synthesize a professional overview "
+            "by combining the details found across the context chunks. "
+            "If the requested information is completely absent from the context, reply strictly: "
+            "'I cannot answer this based on the available documentation.'"
         )
 
         user_prompt = f"Contexts:\n{context_str}\n\nQuestion: {query}"

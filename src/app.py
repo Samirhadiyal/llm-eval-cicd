@@ -58,17 +58,22 @@ def serve_ui():
 
 @app.post("/upload-pdf")
 async def upload_pdf(file: UploadFile = File(...)):
-    """Wipes previous vector database and indexes the newly uploaded PDF."""
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are supported.")
     
     file_path = os.path.join(UPLOAD_DIR, file.filename)
     
     try:
+        # Save temporarily
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
             
+        # Process into vector store
         chunks_count = rag.process_and_reset_pdf(file_path, file.filename)
+        
+        # Cleanup uploaded PDF file from server disk after indexing
+        if os.path.exists(file_path):
+            os.remove(file_path)
         
         return {
             "status": "success",
@@ -77,6 +82,8 @@ async def upload_pdf(file: UploadFile = File(...)):
             "message": f"Previous knowledge wiped. Successfully indexed {file.filename}!"
         }
     except Exception as e:
+        if os.path.exists(file_path):
+            os.remove(file_path)
         raise HTTPException(status_code=500, detail=f"Failed to process PDF: {str(e)}")
 
 @app.post("/ask")
