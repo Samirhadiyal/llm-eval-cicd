@@ -18,6 +18,8 @@ ENV/
 
 # Local Vector Database & Indices
 chroma_db/
+data/chroma_db/
+data/uploads/
 *.chroma
 
 # Machine Learning & Embedding Cache
@@ -32,3 +34,6 @@ eval_report.json
 .idea/
 .DS_Store
 Thumbs.db
+
+# CI Test Artifacts
+eval_report.json
