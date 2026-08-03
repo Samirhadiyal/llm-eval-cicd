@@ -1,139 +1,148 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full bg-slate-950">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MLOps RAG Assistant & Eval Suite</title>
+    <title>PDF Knowledge Assistant & MLOps Eval</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans">
+<body class="h-full font-sans text-slate-100 flex flex-col justify-between p-4 md:p-8">
 
-    <!-- Header -->
-    <header class="border-b border-slate-800 bg-slate-950/50 backdrop-blur sticky top-0 z-50">
-        <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <div class="bg-indigo-600 p-2 rounded-lg">
-                    <i class="fa-solid fa-brain text-xl text-white"></i>
-                </div>
-                <div>
-                    <h1 class="font-bold text-lg leading-tight">MLOps Knowledge Assistant</h1>
-                    <p class="text-xs text-slate-400">Grounded RAG Pipeline + Automated CI/CD Eval</p>
-                </div>
+    <div class="max-w-4xl mx-auto w-full">
+        <!-- Header -->
+        <header class="flex items-center justify-between pb-6 mb-6 border-b border-slate-800">
+            <div>
+                <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-file-pdf text-rose-500"></i> Dynamic PDF Knowledge Assistant
+                </h1>
+                <p class="text-xs text-slate-400 mt-1">Single-Document RAG with Zero Cross-Contamination & Automated CI/CD Eval</p>
             </div>
-            <a href="/docs" target="_blank" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-md border border-slate-700 transition">
-                <i class="fa-solid fa-code text-indigo-400 mr-1"></i> Swagger API
+            <a href="/docs" target="_blank" class="text-xs text-indigo-400 hover:text-indigo-300 font-mono bg-indigo-950/50 border border-indigo-800/50 px-3 py-1.5 rounded-lg transition">
+                &lt;/&gt; Swagger API
             </a>
-        </div>
-    </header>
+        </header>
 
-    <!-- Main Container -->
-    <main class="flex-1 max-w-5xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-        <!-- Left Sidebar: Quick Testing Presets -->
-        <div class="space-y-4">
-            <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4">
-                <h2 class="text-sm font-semibold text-indigo-400 uppercase tracking-wider mb-3">
-                    <i class="fa-solid fa-bolt mr-1"></i> Quick Test Queries
-                </h2>
-                <p class="text-xs text-slate-400 mb-3">Click any preset below to test pipeline behavior:</p>
-                
-                <div class="space-y-2">
-                    <button onclick="fillQuery('What triggers automated model retraining?')" 
-                        class="w-full text-left text-xs bg-slate-700/50 hover:bg-indigo-600/20 hover:border-indigo-500 border border-slate-600/50 p-2.5 rounded-lg transition">
-                        <span class="text-slate-200 font-medium block">🎯 Factual Retrieval</span>
-                        <span class="text-slate-400 text-[11px]">"What triggers model retraining?"</span>
-                    </button>
-
-                    <button onclick="fillQuery('What is the ingestion cadence for batch features?')" 
-                        class="w-full text-left text-xs bg-slate-700/50 hover:bg-indigo-600/20 hover:border-indigo-500 border border-slate-600/50 p-2.5 rounded-lg transition">
-                        <span class="text-slate-200 font-medium block">⏱️ Cadence Lookup</span>
-                        <span class="text-slate-400 text-[11px]">"What is the batch update frequency?"</span>
-                    </button>
-
-                    <button onclick="fillQuery('What AWS S3 bucket region stores model weights?')" 
-                        class="w-full text-left text-xs bg-slate-700/50 hover:bg-amber-500/20 hover:border-amber-500 border border-slate-600/50 p-2.5 rounded-lg transition">
-                        <span class="text-amber-300 font-medium block">🛑 Out-of-Domain Guardrail</span>
-                        <span class="text-slate-400 text-[11px]">"What AWS S3 region is used?"</span>
-                    </button>
-                </div>
+        <!-- PDF Upload Control (Option 1 Architecture) -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 mb-6 shadow-xl">
+            <h2 class="text-xs font-semibold text-rose-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-upload"></i> Step 1: Upload Active PDF
+            </h2>
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <input type="file" id="pdfFileInput" accept=".pdf" 
+                    class="block w-full text-xs text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-rose-400 hover:file:bg-slate-700 cursor-pointer bg-slate-950 rounded-lg border border-slate-800 p-1">
+                <button onclick="uploadPDF()" id="uploadBtn" 
+                    class="bg-rose-600 hover:bg-rose-500 text-white text-xs font-medium px-5 py-3 rounded-lg transition flex items-center justify-center gap-2 shrink-0">
+                    <i class="fa-solid fa-arrows-rotate"></i> Upload & Reset Vector DB
+                </button>
             </div>
-
-            <!-- Pipeline Status Box -->
-            <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 text-xs space-y-2">
-                <div class="flex justify-between items-center text-slate-300">
-                    <span>Vector DB:</span>
-                    <span class="text-emerald-400 font-mono">ChromaDB</span>
-                </div>
-                <div class="flex justify-between items-center text-slate-300">
-                    <span>Embeddings:</span>
-                    <span class="text-emerald-400 font-mono">all-MiniLM-L6-v2</span>
-                </div>
-                <div class="flex justify-between items-center text-slate-300">
-                    <span>Inference Model:</span>
-                    <span class="text-emerald-400 font-mono">Llama 3.1 8B</span>
-                </div>
-            </div>
+            <div id="uploadStatus" class="mt-3 text-xs font-mono hidden"></div>
         </div>
 
-        <!-- Right Side: Interactive Query Console -->
-        <div class="md:col-span-2 space-y-4">
-            <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-5 space-y-4">
-                <form id="askForm" onsubmit="submitQuery(event)" class="space-y-3">
-                    <label for="queryInput" class="block text-sm font-medium text-slate-200">
-                        Ask a question about the MLOps Playbook:
-                    </label>
-                    <div class="flex gap-2">
-                        <input type="text" id="queryInput" required
-                            placeholder="Type a question or select a preset on the left..." 
-                            class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition">
-                        <button type="submit" id="submitBtn"
-                            class="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-lg font-medium text-sm transition flex items-center gap-2">
-                            <span>Ask</span>
-                            <i class="fa-solid fa-paper-plane text-xs"></i>
-                        </button>
-                    </div>
-                </form>
+        <!-- Question Answering Interface -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-xl">
+            <h2 class="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-comments"></i> Step 2: Query the Active Document
+            </h2>
 
-                <!-- Loading State -->
-                <div id="loading" class="hidden py-8 text-center text-slate-400 space-y-2">
-                    <i class="fa-solid fa-circle-notch fa-spin text-2xl text-indigo-400"></i>
-                    <p class="text-xs">Searching ChromaDB & generating grounded answer...</p>
+            <form onsubmit="askQuestion(event)" class="space-y-4">
+                <div>
+                    <input type="text" id="queryInput" placeholder="Ask anything about the currently active PDF..." 
+                        class="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition">
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" id="askBtn" 
+                        class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium px-6 py-2.5 rounded-lg transition flex items-center gap-2">
+                        <span>Ask Assistant</span>
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Output Container -->
+            <div id="outputSection" class="mt-6 space-y-4 hidden">
+                <!-- Answer Box -->
+                <div id="answerCard" class="p-4 rounded-lg bg-slate-950 border border-slate-800">
+                    <div class="text-xs font-semibold text-slate-400 mb-2 flex items-center justify-between">
+                        <span>GENERATED RESPONSE</span>
+                        <span id="activeDocBadge" class="text-[10px] bg-slate-800 text-indigo-300 px-2 py-0.5 rounded font-mono"></span>
+                    </div>
+                    <p id="answerText" class="text-sm text-slate-200 leading-relaxed font-sans"></p>
                 </div>
 
-                <!-- Response Box -->
-                <div id="responseContainer" class="hidden space-y-4 border-t border-slate-700/80 pt-4">
-                    <div>
-                        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Generated Response:</h3>
-                        <div id="answerBox" class="p-4 rounded-lg bg-slate-900 border border-slate-700 text-sm leading-relaxed text-slate-200"></div>
-                    </div>
-
-                    <!-- Retrieved Context Accordion -->
-                    <div>
-                        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Retrieved Document Chunks:</h3>
-                        <div id="contextsBox" class="space-y-2"></div>
-                    </div>
+                <!-- Context Chunks Accordion -->
+                <div class="p-4 rounded-lg bg-slate-950/60 border border-slate-800/80">
+                    <button onclick="toggleContexts()" class="w-full flex items-center justify-between text-xs font-mono text-slate-400 hover:text-slate-300">
+                        <span class="flex items-center gap-1.5">
+                            <i class="fa-solid fa-database text-indigo-400"></i> RETRIEVED CHROMADB CHUNKS
+                        </span>
+                        <i id="accordionIcon" class="fa-solid fa-chevron-down transition-transform duration-200"></i>
+                    </button>
+                    <div id="contextList" class="mt-3 space-y-2 hidden"></div>
                 </div>
             </div>
         </div>
-    </main>
+    </div>
 
+    <!-- Footer -->
+    <footer class="mt-8 text-center text-xs text-slate-500 font-mono">
+        System Architecture: FastAPI • ChromaDB • Groq (Llama 3.1 8B) • PyMuPDF
+    </footer>
+
+    <!-- JavaScript Logic -->
     <script>
-        function fillQuery(text) {
-            document.getElementById('queryInput').value = text;
+        async function uploadPDF() {
+            const fileInput = document.getElementById('pdfFileInput');
+            const statusDiv = document.getElementById('uploadStatus');
+            const uploadBtn = document.getElementById('uploadBtn');
+
+            if (!fileInput.files.length) {
+                alert("Please select a PDF file first.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+
+            uploadBtn.disabled = true;
+            statusDiv.classList.remove('hidden');
+            statusDiv.className = "mt-3 text-xs font-mono text-indigo-400 animate-pulse";
+            statusDiv.innerText = "⏳ Wiping previous ChromaDB collection & indexing new PDF...";
+
+            try {
+                const res = await fetch('/upload-pdf', { method: 'POST', body: formData });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    statusDiv.className = "mt-3 text-xs font-mono text-emerald-400 p-2 bg-emerald-950/30 border border-emerald-800/50 rounded-lg";
+                    statusDiv.innerHTML = `✓ Knowledge Base Reset! Active Document: <strong>${data.filename}</strong> (${data.chunks_indexed} chunks indexed)`;
+                } else {
+                    statusDiv.className = "mt-3 text-xs font-mono text-rose-400 p-2 bg-rose-950/30 border border-rose-800/50 rounded-lg";
+                    statusDiv.innerText = `Error: ${data.detail}`;
+                }
+            } catch (err) {
+                statusDiv.className = "mt-3 text-xs font-mono text-rose-400 p-2 bg-rose-950/30 border border-rose-800/50 rounded-lg";
+                statusDiv.innerText = `Upload failed: ${err}`;
+            } finally {
+                uploadBtn.disabled = false;
+            }
         }
 
-        async function submitQuery(e) {
+        async function askQuestion(e) {
             e.preventDefault();
-            const query = document.getElementById('queryInput').value;
-            const submitBtn = document.getElementById('submitBtn');
-            const loading = document.getElementById('loading');
-            const responseContainer = document.getElementById('responseContainer');
+            const queryInput = document.getElementById('queryInput');
+            const askBtn = document.getElementById('askBtn');
+            const outputSection = document.getElementById('outputSection');
+            const answerCard = document.getElementById('answerCard');
+            const answerText = document.getElementById('answerText');
+            const activeDocBadge = document.getElementById('activeDocBadge');
+            const contextList = document.getElementById('contextList');
 
-            // Reset UI State
-            loading.classList.remove('hidden');
-            responseContainer.classList.add('hidden');
-            submitBtn.disabled = true;
+            const query = queryInput.value.trim();
+            if (!query) return;
+
+            askBtn.disabled = true;
+            askBtn.innerText = "Searching & Generating...";
 
             try {
                 const res = await fetch('/ask', {
@@ -143,40 +152,47 @@
                 });
 
                 const data = await res.json();
+                outputSection.classList.remove('hidden');
 
-                // Populate Answer
-                const answerBox = document.getElementById('answerBox');
-                answerBox.innerText = data.answer;
+                if (res.ok) {
+                    answerText.innerText = data.answer;
+                    activeDocBadge.innerText = data.active_document ? `Doc: ${data.active_document}` : 'No Doc Loaded';
 
-                // Highlight Guardrail Refusals
-                if(data.answer.includes("cannot answer")) {
-                    answerBox.className = "p-4 rounded-lg bg-amber-950/30 border border-amber-800/60 text-sm text-amber-200";
+                    // Style amber if refusing
+                    if (data.answer.includes("cannot answer")) {
+                        answerCard.className = "p-4 rounded-lg bg-amber-950/30 border border-amber-800/50";
+                    } else {
+                        answerCard.className = "p-4 rounded-lg bg-slate-950 border border-slate-800";
+                    }
+
+                    // Populate contexts
+                    contextList.innerHTML = '';
+                    if (data.retrieved_contexts.length > 0) {
+                        data.retrieved_contexts.forEach((ctx, idx) => {
+                            const div = document.createElement('div');
+                            div.className = "p-2.5 bg-slate-900 border border-slate-800 rounded text-xs font-mono text-slate-300";
+                            div.innerText = `Chunk ${idx + 1}: ${ctx}`;
+                            contextList.appendChild(div);
+                        });
+                    } else {
+                        contextList.innerHTML = '<p class="text-xs text-slate-500 italic">No contexts retrieved.</p>';
+                    }
                 } else {
-                    answerBox.className = "p-4 rounded-lg bg-slate-900 border border-indigo-900/50 text-sm text-slate-200";
+                    answerText.innerText = `Error: ${data.detail}`;
                 }
-
-                // Populate Retrieved Contexts
-                const contextsBox = document.getElementById('contextsBox');
-                contextsBox.innerHTML = '';
-                
-                if (data.retrieved_contexts && data.retrieved_contexts.length > 0) {
-                    data.retrieved_contexts.forEach((ctx, i) => {
-                        const item = document.createElement('div');
-                        item.className = "p-3 bg-slate-900/60 border border-slate-800 rounded text-xs font-mono text-slate-400";
-                        item.innerText = `Chunk ${i+1}: ${ctx}`;
-                        contextsBox.appendChild(item);
-                    });
-                } else {
-                    contextsBox.innerHTML = '<span class="text-xs text-slate-500">No contexts retrieved.</span>';
-                }
-
-                responseContainer.classList.remove('hidden');
             } catch (err) {
-                alert("Error connecting to server: " + err);
+                answerText.innerText = `An error occurred: ${err}`;
             } finally {
-                loading.classList.add('hidden');
-                submitBtn.disabled = false;
+                askBtn.disabled = false;
+                askBtn.innerHTML = '<span>Ask Assistant</span> <i class="fa-solid fa-paper-plane"></i>';
             }
+        }
+
+        function toggleContexts() {
+            const contextList = document.getElementById('contextList');
+            const icon = document.getElementById('accordionIcon');
+            contextList.classList.toggle('hidden');
+            icon.classList.toggle('rotate-180');
         }
     </script>
 </body>
