@@ -1,17 +1,22 @@
 [
   {
     "category": "Factual Retrieval",
-    "query": "What are the primary technical skills listed in the document?",
-    "expected_answer": "Extract exact skills explicitly mentioned in the text."
+    "query": "What vector database and reranker model are used in the system architecture?"
+  },
+  {
+    "category": "Factual Retrieval",
+    "query": "What are the performance SLAs for the FlashRank reranker stage?"
+  },
+  {
+    "category": "Operational Thresholds",
+    "query": "What is the minimum target score required for the CI Quality Gate to pass?"
   },
   {
     "category": "Out-of-Domain Guardrail",
-    "query": "What is the penalty for a no-ball in international cricket?",
-    "expected_answer": "I cannot answer this based on the available documentation."
+    "query": "What is the penalty for a no-ball in international cricket?"
   },
   {
     "category": "False Premise",
-    "query": "Why does the document recommend using Java for model training?",
-    "expected_answer": "Correction based on context or refusal if false premise is ungrounded."
+    "query": "Why does the document recommend using PostgreSQL for vector storage?"
   }
 ]
