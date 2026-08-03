@@ -1,4 +1,5 @@
 import os
+import time
 import fitz  # PyMuPDF
 import chromadb
 from chromadb.utils import embedding_functions
@@ -35,7 +36,6 @@ class RAGPipeline:
         )
 
     def process_and_reset_pdf(self, file_path: str, filename: str) -> int:
-        """Wipe collection, build ChromaDB dense index AND BM25 sparse index."""
         try:
             self.chroma_client.delete_collection(name=self.collection_name)
         except Exception:
@@ -77,7 +77,6 @@ class RAGPipeline:
         return len(documents)
 
     def reciprocal_rank_fusion(self, dense_results: list, sparse_results: list, k: int = 60, top_n: int = 10):
-        """Combines Dense and Sparse rankings using Reciprocal Rank Fusion (RRF)."""
         doc_scores = {}
 
         for rank, doc in enumerate(dense_results):
@@ -94,53 +93,61 @@ class RAGPipeline:
         return [doc for doc, score in sorted_docs[:top_n]]
 
     def rerank_chunks(self, query: str, candidate_chunks: list, top_n: int = 3):
-        """Re-scores candidate chunks using Cross-Encoder model via FlashRank."""
         if not candidate_chunks:
             return []
 
-        # Prepare FlashRank input payload
         passages = [{"id": idx, "text": chunk} for idx, chunk in enumerate(candidate_chunks)]
         rerank_request = RerankRequest(query=query, passages=passages)
         
         reranked_results = self.reranker.rerank(rerank_request)
-        
-        # Return top N reranked chunk texts
         return [result["text"] for result in reranked_results[:top_n]]
 
     def answer(self, query: str, top_k: int = 3):
+        start_total = time.time()
+        
         if self.collection.count() == 0:
             return {
                 "query": query,
                 "answer": "No active PDF loaded. Please upload a PDF document first.",
                 "retrieved_contexts": [],
-                "active_document": None
+                "active_document": None,
+                "trace": {}
             }
 
-        # --- 1. Dense Vector Retrieval (ChromaDB) ---
+        # --- 1. Hybrid Retrieval Stage ---
+        t0 = time.time()
         dense_response = self.collection.query(query_texts=[query], n_results=min(10, self.collection.count()))
         dense_chunks = dense_response["documents"][0] if dense_response["documents"] else []
 
-        # --- 2. Sparse Keyword Retrieval (BM25) ---
         sparse_chunks = []
         if self.bm25_index:
             tokenized_query = query.lower().split()
             sparse_chunks = self.bm25_index.get_top_n(tokenized_query, self.bm25_corpus, n=min(10, len(self.bm25_corpus)))
 
-        # --- 3. Hybrid Search Fusion via RRF (Fetch Top 10 Candidates) ---
         candidate_chunks = self.reciprocal_rank_fusion(dense_chunks, sparse_chunks, top_n=10)
+        retrieval_latency = round((time.time() - t0) * 1000, 2)  # in ms
 
-        # --- 4. Cross-Encoder Reranking (Refine to Top 3 Best Chunks) ---
+        # --- 2. Reranking Stage ---
+        t1 = time.time()
         retrieved_contexts = self.rerank_chunks(query, candidate_chunks, top_n=top_k)
+        rerank_latency = round((time.time() - t1) * 1000, 2)  # in ms
 
         if not retrieved_contexts:
             return {
                 "query": query,
                 "answer": "I cannot answer this based on the uploaded document.",
                 "retrieved_contexts": [],
-                "active_document": self.active_filename
+                "active_document": self.active_filename,
+                "trace": {
+                    "retrieval_latency_ms": retrieval_latency,
+                    "rerank_latency_ms": rerank_latency,
+                    "llm_latency_ms": 0,
+                    "total_latency_ms": round((time.time() - start_total) * 1000, 2)
+                }
             }
 
-        # --- 5. LLM Generation via Groq ---
+        # --- 3. LLM Generation Stage ---
+        t2 = time.time()
         context_str = "\n\n".join([f"Chunk {i+1}: {ctx}" for i, ctx in enumerate(retrieved_contexts)])
         system_prompt = (
             "You are a strict QA assistant. Answer the user's question using ONLY the provided context below. "
@@ -158,11 +165,21 @@ class RAGPipeline:
             temperature=0.0
         )
 
+        llm_latency = round((time.time() - t2) * 1000, 2)  # in ms
         answer_text = completion.choices[0].message.content
+        total_latency = round((time.time() - start_total) * 1000, 2)
 
         return {
             "query": query,
             "answer": answer_text,
             "retrieved_contexts": retrieved_contexts,
-            "active_document": self.active_filename
+            "active_document": self.active_filename,
+            "trace": {
+                "num_candidates_retrieved": len(candidate_chunks),
+                "num_chunks_reranked": len(retrieved_contexts),
+                "retrieval_latency_ms": retrieval_latency,
+                "rerank_latency_ms": rerank_latency,
+                "llm_latency_ms": llm_latency,
+                "total_latency_ms": total_latency
+            }
         }
