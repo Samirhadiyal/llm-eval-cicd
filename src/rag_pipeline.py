@@ -102,6 +102,22 @@ class RAGPipeline:
             "chunks_indexed": len(documents)
         }
 
+    def reset_database(self) -> dict:
+        """Wipes all collections in ChromaDB and clears in-memory BM25 indices."""
+        try:
+            # Delete existing collection and recreate an empty one
+            self.chroma_client.delete_collection(name=self.collection_name)
+            self.collection = self.chroma_client.get_or_create_collection(
+                name=self.collection_name,
+                embedding_function=self.embedding_fn
+            )
+            # Clear in-memory BM25 indices
+            self.bm25_indices.clear()
+            
+            return {"status": "success", "message": "Knowledge base completely wiped."}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+    
     def list_indexed_documents(self) -> list:
         """Returns metadata list of all documents currently indexed."""
         documents_map = {}
@@ -233,3 +249,5 @@ class RAGPipeline:
                 "total_latency_ms": total_latency
             }
         }
+        
+        

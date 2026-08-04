@@ -100,3 +100,15 @@ def ask_question(request: QueryRequest):
         return rag.answer(query=request.query, doc_id=request.doc_id, top_k=request.top_k)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Query execution error: {str(e)}")
+    
+@app.post("/reset-database")
+def reset_database():
+    """Endpoint to wipe all indexed documents from ChromaDB and BM25."""
+    if rag is None:
+        raise HTTPException(status_code=500, detail="RAG Pipeline is not initialized.")
+    
+    result = rag.reset_database()
+    if result["status"] == "error":
+        raise HTTPException(status_code=500, detail=f"Failed to reset database: {result['message']}")
+    
+    return {"message": "Knowledge base has been completely reset!"}

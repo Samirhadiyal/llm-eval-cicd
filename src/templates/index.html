@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enterprise Multi-Doc RAG Assistant</title>
+    <title>Multi-Doc RAG Assistant</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans">
@@ -17,7 +17,7 @@
                 </svg>
             </div>
             <div>
-                <h1 class="text-xl font-bold tracking-tight">Enterprise Multi-Doc RAG Assistant</h1>
+                <h1 class="text-xl font-bold tracking-tight">Multi-Doc RAG Assistant</h1>
                 <p class="text-xs text-slate-400">Multi-Tenant Retrieval + FlashRank Reranking + Observability</p>
             </div>
         </div>
@@ -52,7 +52,15 @@
 
             <!-- Active Documents List -->
             <div class="bg-slate-800/50 border border-slate-700/50 rounded-xl p-5 backdrop-blur">
-                <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-3">2. Knowledge Base Index</h2>
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider">2. Knowledge Base Index</h2>
+                    <button onclick="resetKnowledgeBase()" class="text-[11px] bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 border border-rose-500/30 px-2.5 py-1 rounded transition-colors flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                        Clear DB
+                    </button>
+                </div>
                 <div id="documentList" class="space-y-2 text-xs text-slate-400">
                     <p class="italic">Loading indexed documents...</p>
                 </div>
@@ -252,6 +260,34 @@
             } finally {
                 askBtn.disabled = false;
                 askBtn.innerText = "Execute Search & Reason";
+            }
+        }
+        
+        async function resetKnowledgeBase() {
+            if (!confirm("Are you sure you want to clear all indexed documents from the knowledge base?")) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/reset-database', { method: 'POST' });
+                const data = await response.json();
+
+                if (response.ok) {
+                    const statusDiv = document.getElementById('uploadStatus');
+                    statusDiv.classList.remove('hidden');
+                    statusDiv.className = "mt-4 text-xs p-3 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20";
+                    statusDiv.innerText = data.message;
+            
+                    // Refresh document list in UI
+                    await fetchDocuments();
+            
+                    // Hide response container if open
+                    document.getElementById('responseContainer').classList.add('hidden');
+                } else {
+                    throw new Error(data.detail || "Failed to reset database");
+                }
+            } catch (err) {
+                alert("Error resetting database: " + err.message);
             }
         }
 
