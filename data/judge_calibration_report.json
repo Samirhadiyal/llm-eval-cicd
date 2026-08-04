@@ -1,0 +1,7 @@
+{
+  "judge_model": "llama-3.3-70b-versatile",
+  "faithfulness_alignment_pct": 100.0,
+  "relevancy_alignment_pct": 100.0,
+  "overall_alignment_pct": 100.0,
+  "status": "VALIDATED"
+}
