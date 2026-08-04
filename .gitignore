@@ -28,9 +28,11 @@ huggingface/
 
 # Generated Evaluation Artifacts
 eval_report.json
+*.log
 
 # IDE & OS Junk Files
 .vscode/
+.DS_Store
 .idea/
 .DS_Store
 Thumbs.db

@@ -13,8 +13,8 @@ from groq import Groq
 from src.rag_pipeline import RAGPipeline
 
 JUDGE_MODEL = "llama-3.3-70b-versatile"
-FAITHFULNESS_THRESHOLD = 0.80
-RELEVANCY_THRESHOLD = 0.80
+STATIC_QUALITY_FLOOR = 0.80
+MAX_ALLOWED_DEGRADATION = 0.05  # Fail if performance drops > 5% below baseline
 
 def evaluate_with_judge(groq_client, query: str, context: str, answer: str, category: str = "General"):
     prompt = f"""
@@ -51,35 +51,49 @@ def evaluate_with_judge(groq_client, query: str, context: str, answer: str, cate
         return {"faithfulness": 0.0, "relevancy": 0.0, "reasoning": "Judge execution failed"}
 
 def run_evaluation(mode: str = "full"):
-    print("=" * 60)
-    print(f"🚀 Starting PDF RAG Quality Gate Evaluation (Mode: {mode.upper()})")
-    print("=" * 60)
+    print("=" * 65)
+    print(f"🚀 STARTING PDF RAG QUALITY GATE & REGRESSION CHECK (Mode: {mode.upper()})")
+    print("=" * 65)
 
-    # 1. Initialize Pipeline & Ingest Sample PDF
+    # 1. Load Baseline Metrics for Regression Gate
+    baseline_file = os.path.join("data", "baseline_metrics.json")
+    baseline_faithfulness = STATIC_QUALITY_FLOOR
+    baseline_relevancy = STATIC_QUALITY_FLOOR
+
+    if os.path.exists(baseline_file):
+        with open(baseline_file, "r", encoding="utf-8") as f:
+            b_data = json.load(f)
+            baseline_faithfulness = b_data.get("faithfulness", STATIC_QUALITY_FLOOR)
+            baseline_relevancy = b_data.get("relevancy", STATIC_QUALITY_FLOOR)
+            print(f"📌 Loaded Production Baseline -> Faithfulness: {baseline_faithfulness:.2f} | Relevancy: {baseline_relevancy:.2f}")
+
+    target_faithfulness = max(STATIC_QUALITY_FLOOR, baseline_faithfulness - MAX_ALLOWED_DEGRADATION)
+    target_relevancy = max(STATIC_QUALITY_FLOOR, baseline_relevancy - MAX_ALLOWED_DEGRADATION)
+
+    # 2. Initialize Pipeline & Ingest Sample PDF
     rag = RAGPipeline()
     sample_pdf = os.path.join("data", "sample_eval_doc.pdf")
 
     if not os.path.exists(sample_pdf):
-        print(f"❌ Error: Benchmark PDF missing at '{sample_pdf}'. Please run generate script.")
+        print(f"❌ Error: Benchmark PDF missing at '{sample_pdf}'.")
         sys.exit(1)
 
     print(f"📄 Indexing benchmark PDF: {sample_pdf}...")
     ingest_info = rag.ingest_pdf(sample_pdf, "sample_eval_doc.pdf")
     print(f"✓ Indexed {ingest_info['chunks_indexed']} chunks under doc_id '{ingest_info['doc_id']}'.\n")
 
-    # 2. Load Evaluation Dataset
+    # 3. Load Evaluation Dataset
     eval_dataset_path = os.path.join("data", "eval_dataset.json")
     with open(eval_dataset_path, "r", encoding="utf-8") as f:
         eval_cases = json.load(f)
 
-    # If Smoke Mode or CI, select 10 balanced cases across categories
     if mode == "smoke" or os.getenv("CI") == "true":
-        print("⚡ Running in CI/Smoke Mode: Selecting 10 representative test cases...")
+        print("⚡ CI/Smoke Mode Active: Running 10 representative test cases...")
         categories = ["Factual Retrieval", "Multi-Chunk Synthesis", "Out-of-Domain Guardrail", "False Premise"]
         selected_cases = []
         for cat in categories:
             cat_cases = [c for c in eval_cases if c.get("category") == cat]
-            selected_cases.extend(cat_cases[:3])  # Take top 2-3 per category
+            selected_cases.extend(cat_cases[:3])
         eval_cases = selected_cases[:10]
 
     groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
@@ -87,7 +101,7 @@ def run_evaluation(mode: str = "full"):
     faithfulness_scores = []
     relevancy_scores = []
 
-    print(f"🧪 Running {len(eval_cases)} evaluation cases through LLM Judge ({JUDGE_MODEL})...\n")
+    print(f"🧪 Evaluating {len(eval_cases)} cases via LLM Judge ({JUDGE_MODEL})...\n")
 
     for idx, case in enumerate(eval_cases, 1):
         query = case["query"]
@@ -116,30 +130,38 @@ def run_evaluation(mode: str = "full"):
     avg_faithfulness = sum(faithfulness_scores) / len(faithfulness_scores)
     avg_relevancy = sum(relevancy_scores) / len(relevancy_scores)
 
-    print("=" * 60)
-    print("📊 EVALUATION SUMMARY")
-    print("=" * 60)
-    print(f"Evaluated Cases         : {len(eval_cases)}")
-    print(f"Average Faithfulness Score: {avg_faithfulness:.2f} (Target: >= {FAITHFULNESS_THRESHOLD})")
-    print(f"Average Relevancy Score   : {avg_relevancy:.2f} (Target: >= {RELEVANCY_THRESHOLD})")
+    # Check against both floor and regression tolerance
+    passed_floor = avg_faithfulness >= STATIC_QUALITY_FLOOR and avg_relevancy >= STATIC_QUALITY_FLOOR
+    passed_regression = avg_faithfulness >= target_faithfulness and avg_relevancy >= target_relevancy
+    gate_passed = passed_floor and passed_regression
+
+    print("=" * 65)
+    print("📊 FINAL REGRESSION & QUALITY GATE SUMMARY")
+    print("=" * 65)
+    print(f"Evaluated Test Cases      : {len(eval_cases)}")
+    print(f"Current Faithfulness Score: {avg_faithfulness:.2f} (Required Min: {target_faithfulness:.2f})")
+    print(f"Current Relevancy Score   : {avg_relevancy:.2f} (Required Min: {target_relevancy:.2f})")
+    print(f"Absolute Quality Floor    : {STATIC_QUALITY_FLOOR:.2f}")
 
     report = {
         "avg_faithfulness": avg_faithfulness,
         "avg_relevancy": avg_relevancy,
-        "threshold": FAITHFULNESS_THRESHOLD,
+        "baseline_faithfulness": baseline_faithfulness,
+        "baseline_relevancy": baseline_relevancy,
+        "allowed_degradation_tolerance": MAX_ALLOWED_DEGRADATION,
         "total_cases_evaluated": len(eval_cases),
         "mode": mode,
-        "status": "PASSED" if avg_faithfulness >= FAITHFULNESS_THRESHOLD and avg_relevancy >= RELEVANCY_THRESHOLD else "FAILED"
+        "status": "PASSED" if gate_passed else "FAILED"
     }
     
     with open("eval_report.json", "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2)
 
-    if avg_faithfulness >= FAITHFULNESS_THRESHOLD and avg_relevancy >= RELEVANCY_THRESHOLD:
-        print("\n✅ QUALITY GATE PASSED: PDF RAG Pipeline meets quality thresholds!")
+    if gate_passed:
+        print("\n✅ QUALITY GATE & REGRESSION CHECK PASSED!")
         sys.exit(0)
     else:
-        print("\n❌ QUALITY GATE FAILED: Performance fell below target quality thresholds.")
+        print("\n❌ QUALITY GATE FAILED: Performance regression detected or score below floor.")
         sys.exit(1)
 
 if __name__ == "__main__":

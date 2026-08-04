@@ -2,7 +2,7 @@ name: PDF RAG Evaluation CI Quality Gate
 
 on:
   push:
-    branches: [ main, feature/pdf-rag-chatbot ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
@@ -11,16 +11,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-          cache: "pip"
+          python-version: '3.11'
 
-      - name: Install System Dependencies for PyMuPDF
+      - name: Install System Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential
@@ -30,13 +29,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run PDF RAG Quality Gate Evaluation
+      - name: Run Automated Quality Gate & Regression Check
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          CI: "true"
         run: |
-          python tests/eval_runner.py
+          python tests/eval_runner.py --smoke
 
-      - name: Upload Evaluation Artifact Report
+      - name: Upload Evaluation Artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:

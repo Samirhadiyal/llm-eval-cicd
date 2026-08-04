@@ -1,0 +1,7 @@
+{
+  "faithfulness": 1.00,
+  "relevancy": 1.00,
+  "updated_at": "2026-08-04",
+  "benchmark_cases": 35,
+  "notes": "Verified golden production baseline for multi-doc RAG pipeline"
+}
