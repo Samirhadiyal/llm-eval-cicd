@@ -1,22 +1,177 @@
 [
   {
+    "id": 1,
     "category": "Factual Retrieval",
-    "query": "What vector database and reranker model are used in the system architecture?"
+    "query": "What vector database is used for dense embedding storage in the system?"
   },
   {
+    "id": 2,
     "category": "Factual Retrieval",
-    "query": "What are the performance SLAs for the FlashRank reranker stage?"
+    "query": "Which library is used for sparse search and exact keyword matching?"
   },
   {
-    "category": "Operational Thresholds",
-    "query": "What is the minimum target score required for the CI Quality Gate to pass?"
+    "id": 3,
+    "category": "Factual Retrieval",
+    "query": "What model is used for cross-encoder reranking in the retrieval stage?"
   },
   {
+    "id": 4,
+    "category": "Factual Retrieval",
+    "query": "Which cloud service and LLM family are used for text generation?"
+  },
+  {
+    "id": 5,
+    "category": "Factual Retrieval",
+    "query": "What algorithm is used to fuse dense and sparse search ranks?"
+  },
+  {
+    "id": 6,
+    "category": "Factual Retrieval",
+    "query": "What is the minimum target score required for the CI Quality Gate?"
+  },
+  {
+    "id": 7,
+    "category": "Factual Retrieval",
+    "query": "What engine automates the CI/CD quality gate testing on pull requests?"
+  },
+  {
+    "id": 8,
+    "category": "Factual Retrieval",
+    "query": "What is the target SLA for the cross-encoder reranking stage?"
+  },
+  {
+    "id": 9,
+    "category": "Factual Retrieval",
+    "query": "What is the total end-to-end SLA target for the pipeline execution?"
+  },
+  {
+    "id": 10,
+    "category": "Factual Retrieval",
+    "query": "What standard refusal message should the system output when information is absent?"
+  },
+  {
+    "id": 11,
+    "category": "Multi-Chunk Synthesis",
+    "query": "Summarize the technical stack and components mentioned in the document."
+  },
+  {
+    "id": 12,
+    "category": "Multi-Chunk Synthesis",
+    "query": "What are all the latency SLA targets across the different stages of the pipeline?"
+  },
+  {
+    "id": 13,
+    "category": "Multi-Chunk Synthesis",
+    "query": "How does the system ensure zero regression during code updates?"
+  },
+  {
+    "id": 14,
+    "category": "Multi-Chunk Synthesis",
+    "query": "Overview the operational requirements and quality gate thresholds for deployments."
+  },
+  {
+    "id": 15,
+    "category": "Multi-Chunk Synthesis",
+    "query": "Explain how hybrid retrieval combines sparse and dense search techniques."
+  },
+  {
+    "id": 16,
+    "category": "Multi-Chunk Synthesis",
+    "query": "What guardrails and policies are in place to prevent false hallucinations?"
+  },
+  {
+    "id": 17,
+    "category": "Multi-Chunk Synthesis",
+    "query": "List all components involved in the document retrieval and scoring process."
+  },
+  {
+    "id": 18,
+    "category": "Multi-Chunk Synthesis",
+    "query": "What happens when an incoming query falls outside the knowledge base context?"
+  },
+  {
+    "id": 19,
+    "category": "Multi-Chunk Synthesis",
+    "query": "Summarize the key metrics evaluated by the automated judge during CI checks."
+  },
+  {
+    "id": 20,
+    "category": "Multi-Chunk Synthesis",
+    "query": "Give a complete overview of the document deployment specification."
+  },
+  {
+    "id": 21,
     "category": "Out-of-Domain Guardrail",
     "query": "What is the penalty for a no-ball in international cricket?"
   },
   {
+    "id": 22,
+    "category": "Out-of-Domain Guardrail",
+    "query": "How do you calculate compound interest in financial accounting?"
+  },
+  {
+    "id": 23,
+    "category": "Out-of-Domain Guardrail",
+    "query": "What are the primary ingredients needed to bake a sourdough bread?"
+  },
+  {
+    "id": 24,
+    "category": "Out-of-Domain Guardrail",
+    "query": "Who was the first president of the United States?"
+  },
+  {
+    "id": 25,
+    "category": "Out-of-Domain Guardrail",
+    "query": "What is the distance between the Earth and the Moon in kilometers?"
+  },
+  {
+    "id": 26,
+    "category": "Out-of-Domain Guardrail",
+    "query": "How do quantum computers process qubits compared to classical bits?"
+  },
+  {
+    "id": 27,
+    "category": "Out-of-Domain Guardrail",
+    "query": "What are the rules of offside in association football?"
+  },
+  {
+    "id": 28,
+    "category": "Out-of-Domain Guardrail",
+    "query": "What is the capital city of Australia?"
+  },
+  {
+    "id": 29,
     "category": "False Premise",
-    "query": "Why does the document recommend using PostgreSQL for vector storage?"
+    "query": "Why does the document recommend using PostgreSQL and pgvector for vector storage?"
+  },
+  {
+    "id": 30,
+    "category": "False Premise",
+    "query": "How does the pipeline integrate OpenAI's GPT-4o for cross-encoder reranking?"
+  },
+  {
+    "id": 31,
+    "category": "False Premise",
+    "query": "Why was ElasticSearch selected over BM25 for sparse retrieval?"
+  },
+  {
+    "id": 32,
+    "category": "False Premise",
+    "query": "What is the reason for setting the minimum quality gate threshold to 0.50?"
+  },
+  {
+    "id": 33,
+    "category": "False Premise",
+    "query": "How does the system use Kubernetes to auto-scale ChromaDB vector nodes?"
+  },
+  {
+    "id": 34,
+    "category": "False Premise",
+    "query": "Why is Pinecone used as the primary cloud vector index?"
+  },
+  {
+    "id": 35,
+    "category": "False Premise",
+    "query": "What hardware acceleration is required to run the FlashRank reranker in production?"
   }
 ]
